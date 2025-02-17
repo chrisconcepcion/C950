@@ -112,7 +112,7 @@ class WGUPS:
                 simulation_time += travel_time
 
                 # If our similation time is earlier than current time or the same time
-                # We consider our pacakge delivered, update delivery time and update
+                # We consider our package delivered, update delivery time and update
                 # our truck mileage.
                 if simulation_time <= current_time:
                     next_package.status = "Delivered"
@@ -145,13 +145,28 @@ class WGUPS:
         # Package have constraints such as must be delivered together: 13,14,15,16,19,20
         # so we put them on the same truck.
         self.trucks[0].packages = [1, 13, 14, 15, 16, 19, 20, 29, 30, 31, 34, 37, 40]
+        i = 0
+        while i < len(self.trucks[0].packages):
+            package = self.hash_table.lookup(self.trucks[0].packages[i])
+            package.truck = self.trucks[0]
+            i += 1
         
         # Second truck - packages that can only be on truck 2 and those which won't arrive
         # at the depot until 9:05 am.
-        self.trucks[1].packages = [3, 18, 36, 38, 6, 25, 28, 32]
+        self.trucks[1].packages = [3, 6, 18, 25, 28, 32, 36, 38]
+        i = 0
+        while i < len(self.trucks[1].packages):
+            package = self.hash_table.lookup(self.trucks[1].packages[i])
+            package.truck = self.trucks[1]
+            i += 1
         
         # Third truck - remaining packages
-        self.trucks[2].packages = [2, 4, 5, 7, 8, 9, 10, 11, 12, 17,  21, 22, 23, 24, 26, 27, 33, 35, 39]
+        self.trucks[2].packages = [2, 4, 5, 7, 8, 9, 10, 11, 12, 17, 21, 22, 23, 24, 26, 27, 33, 35, 39]
+        i = 0
+        while i < len(self.trucks[2].packages):
+            package = self.hash_table.lookup(self.trucks[2].packages[i])
+            package.truck = self.trucks[2]
+            i += 1
         
     # Effectively simulates deliveries based on current time.
     # If a current time is prior to a truck departure time it won't make any deliveries.
@@ -172,6 +187,23 @@ class WGUPS:
                 self.deliver_packages(truck, current_time)
 
         self.total_mileage = sum(truck.mileage for truck in self.trucks)
+
+    # Display package data.
+    def display_package_data(self, package):
+        print(f"Package ID: {package.id}")
+        print(f"Address: {package.address}")
+    
+        print(f"Deadline: {package.deadline}")
+        print(f"Delivery Status: {package.status}")
+        if package.truck:
+            print(f"Truck Number: {package.truck.id}")
+        else:
+            print(f"Truck Number: Not assigned to truck as of yet.")
+        if package.delivery_time:
+            print(f"Delivery Time: {package.delivery_time.strftime('%I:%M %p')}")
+        else:
+            print(f"Delivery Time: Unavailable")
+        print("-" * 30)
 
 def main():
     wgups = WGUPS()
@@ -201,28 +233,11 @@ def main():
                     for i in range(1, 41):
                         package = wgups.hash_table.lookup(i)
                         if package:
-                            print(f"Package {i}:")
-                            print(f"Status: {package.status}")
-                            print(f"Address: {package.address}")
-                            print(f"Deadline: {package.deadline}")
-                            if package.delivery_time:
-                                print(f"Delivery Time: {package.delivery_time.strftime('%I:%M %p')}")
-                            print("-" * 30)
-                else:
+                            wgups.display_package_data(package)
                     package_id = int(input("Enter package ID (1-40): "))
                     package = wgups.hash_table.lookup(package_id)
                     if package:
-                        print(f"\nPackage {package_id} status at {time_str}:")
-                        print(f"Status: {package.status}")
-                        print(f"Address: {package.address}")
-                        print(f"Deadline: {package.deadline}")
-                        print(f"City: {package.city}")
-                        print(f"Zip: {package.zip_code}")
-                        print(f"Weight: {package.weight} KILO")
-                        if package.notes:
-                            print(f"Notes: {package.notes}")
-                        if package.delivery_time:
-                            print(f"Delivery Time: {package.delivery_time.strftime('%I:%M %p')}")
+                        wgups.display_package_data(package)
                     else:
                         print("Package not found")
             except ValueError:
