@@ -91,6 +91,9 @@ class WGUPS:
         return next_package, shortest_distance
 
     def deliver_packages(self, truck, current_time):
+        # Boolean to manage state for package #9 address correction.
+        package_address_correction = False 
+
         if not truck.packages:
             return
 
@@ -102,11 +105,19 @@ class WGUPS:
         undelivered = truck.packages.copy()
 
         while undelivered:
+            # Handle package #9 address correction
+            if package_address_correction is False and current_time >= datetime.strptime("10:20 AM", "%I:%M %p"):
+                package = self.hash_table.lookup(9)
+                package.address = "410 S State St"
+                package.zip_code = "84111"
+                package_address_correction = True
+
             # Find the closest package based on distance and return it along with the distance.
             next_package, distance = self.find_shortest_path(current_location, undelivered)
             
             # If we found our next closest package...
             if next_package:
+
                 # Update travel and simulation time.
                 travel_time = timedelta(hours=distance / 18)  # 18 mph
                 simulation_time += travel_time
@@ -128,10 +139,7 @@ class WGUPS:
                 current_location = next_package.address
                 undelivered.remove(next_package.id)
 
-                # Handle package #9 address correction
-                if next_package.id == 9 and current_time >= datetime.strptime("10:20 AM", "%I:%M %p"):
-                    next_package.address = "410 S State St"
-                    next_package.zip_code = "84111"
+                
             else:
                 break
 
@@ -234,12 +242,16 @@ def main():
                         package = wgups.hash_table.lookup(i)
                         if package:
                             wgups.display_package_data(package)
+                    print(f"\nTotal mileage for all trucks: {wgups.total_mileage:.1f} miles")
+                else:
                     package_id = int(input("Enter package ID (1-40): "))
                     package = wgups.hash_table.lookup(package_id)
                     if package:
+                        print("-" * 50)
                         wgups.display_package_data(package)
                     else:
                         print("Package not found")
+
             except ValueError:
                 print("Invalid time format. Please use HH:MM AM/PM")
         
